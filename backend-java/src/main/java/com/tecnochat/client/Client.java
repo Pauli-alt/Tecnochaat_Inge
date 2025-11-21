@@ -15,6 +15,9 @@ public class Client {
     private static final Object enterLock = new Object();
     private static Thread recibirThread;
 
+    private static final Scanner SCANNER = new Scanner(System.in);
+
+
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         
@@ -460,7 +463,7 @@ public class Client {
                 System.out.println("Presiona ENTER para reproducir...");
                 
                 esperandoEnter = true;
-                new Scanner(System.in).nextLine();
+                SCANNER.nextLine();
                 
                 System.out.println("Reproduciendo audio...");
                 if (reproducirAudio(archivoAudio)) {
@@ -481,8 +484,6 @@ public class Client {
 
     private static void grabarYEnviarAudio(DataOutputStream dataOut) {
         try {
-            Scanner scannerGrabacion = new Scanner(System.in);
-
             AudioFormat formato = new AudioFormat(44100.0f, 16, 1, true, false);
             DataLine.Info info = new DataLine.Info(TargetDataLine.class, formato);
 
@@ -503,7 +504,7 @@ public class Client {
 
             Thread controlGrabacion = new Thread(() -> {
                 try {
-                    scannerGrabacion.nextLine();
+                    SCANNER.nextLine();
                     grabando.set(false);
                     microfono.stop();
                     microfono.close();

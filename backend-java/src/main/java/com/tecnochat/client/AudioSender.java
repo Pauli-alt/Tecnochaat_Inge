@@ -8,14 +8,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class AudioSender {
 
+    private static final Scanner SCANNER = new Scanner(System.in);
+
     public static void grabarYEnviarAudio(Socket socket, Scanner scanner2, boolean esGrupo) {
         try {
-            Scanner scanner = new Scanner(System.in);
 
             String destino = null;
             if (scanner2 == null) {
                 System.out.println(esGrupo ? "Ingresa el nombre del grupo:" : "Ingresa el nombre del usuario:");
-                destino = scanner.nextLine().trim();
+                destino = SCANNER.nextLine().trim();
             } else {
                 destino = scanner2.nextLine().trim();
             }
@@ -75,7 +76,7 @@ public class AudioSender {
 
             Thread stopper = new Thread(() -> {
                 try {
-                    scanner.nextLine();
+                    SCANNER.nextLine();
                     grabando.set(false);
                     mic.stop();
                     mic.close();
@@ -130,7 +131,7 @@ public class AudioSender {
 
             if (audioData.length < 1024) {
                 System.out.println("Grabacion muy corta. Estas seguro de enviarla? (S/N)");
-                String confirmacion = scanner.nextLine();
+                String confirmacion = SCANNER.nextLine();
                 if (!confirmacion.equalsIgnoreCase("S")) {
                     System.out.println("Envio cancelado.");
                     return;
@@ -305,7 +306,7 @@ public class AudioSender {
 
     public static File grabarAudioLocal() {
         try {
-            Scanner scanner = new Scanner(System.in);
+            
             AudioFormat formato = getOptimalAudioFormat();
             DataLine.Info info = new DataLine.Info(TargetDataLine.class, formato);
 
@@ -326,7 +327,7 @@ public class AudioSender {
 
             Thread stopper = new Thread(() -> {
                 try {
-                    scanner.nextLine();
+                    SCANNER.nextLine();
                     grabando[0] = false;
                     mic.stop();
                     mic.close();

@@ -7,6 +7,8 @@ import java.util.Scanner;
 
 public class ClientAudioReceiver {
 
+    private static final Scanner SCANNER = new Scanner(System.in);
+
     public static void recibirAudio(Socket socket) {
         try {
             InputStream is = socket.getInputStream();
@@ -74,9 +76,7 @@ public class ClientAudioReceiver {
         }
     }
 
-    private static void manejarReproduccionAudio(File archivoAudio) {
-        Scanner scanner = new Scanner(System.in);
-        
+    private static void manejarReproduccionAudio(File archivoAudio) {        
         try {
             System.out.println("\nQue deseas hacer con el audio recibido?");
             System.out.println("1. Reproducir ahora");
@@ -85,7 +85,7 @@ public class ClientAudioReceiver {
             System.out.println("4. Ver informacion del audio");
             System.out.print("Elige opcion: ");
             
-            String opcion = scanner.nextLine().trim();
+            String opcion = SCANNER.nextLine().trim();
 
             switch (opcion) {
                 case "1":
@@ -101,7 +101,7 @@ public class ClientAudioReceiver {
                 case "4":
                     mostrarInformacionAudio(archivoAudio);
                     System.out.print("Reproducir ahora? (S/N): ");
-                    String respuesta = scanner.nextLine().trim();
+                    String respuesta = SCANNER.nextLine().trim();
                     if (respuesta.equalsIgnoreCase("S")) {
                         reproducirAudioInmediato(archivoAudio);
                     }
@@ -136,9 +136,8 @@ public class ClientAudioReceiver {
             if (exito) {
                 System.out.println("Reproduccion completada.");
                 
-                Scanner scanner = new Scanner(System.in);
                 System.out.print("Reproducir nuevamente? (S/N): ");
-                String respuesta = scanner.nextLine().trim();
+                String respuesta = SCANNER.nextLine().trim();
                 
                 if (respuesta.equalsIgnoreCase("S")) {
                     System.out.println("Reproduciendo nuevamente...");
@@ -257,9 +256,8 @@ public class ClientAudioReceiver {
                 }
             }
 
-            Scanner scanner = new Scanner(System.in);
             System.out.print("\nReproducir un audio? (numero o 'N' para salir): ");
-            String input = scanner.nextLine().trim();
+            String input = SCANNER.nextLine().trim();
             
             if (!input.equalsIgnoreCase("N")) {
                 try {
