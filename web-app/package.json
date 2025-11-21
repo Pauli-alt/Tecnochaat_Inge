@@ -1,0 +1,19 @@
+{
+  "name": "tecnochat-webapp",
+  "version": "1.0.0",
+  "description": "Frontend Web para TecnoChat con HTML + JavaScript usando Webpack",
+  "type": "module",
+  "scripts": {
+    "dev": "webpack serve --mode development",
+    "build": "webpack --mode production"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "webpack": "^5.102.1",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^4.15.2",
+    "html-webpack-plugin": "^5.6.4",
+    "css-loader": "^6.11.0",
+    "style-loader": "^3.3.4"
+  }
+}
