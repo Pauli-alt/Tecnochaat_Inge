@@ -11,7 +11,7 @@ repositories {
 
 dependencies {
     implementation 'com.google.code.gson:gson:2.10.1'
-
+    implementation 'com.zeroc:ice:3.7.9'
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
 }
@@ -19,6 +19,19 @@ dependencies {
 test {
     useJUnitPlatform()
 }
+
+def sliceDir = file("src/main/ice")
+def generatedDir = file("src/main/generated")
+
+task slice(type: Exec) {
+    inputs.dir sliceDir
+    outputs.dir generatedDir
+    commandLine "slice2java", "--output-dir", generatedDir, "${sliceDir}/ChatService.ice"
+}
+
+compileJava.dependsOn slice
+
+sourceSets.main.java.srcDir generatedDir
 
 // ===============================================
 // TAREAS PARA EJECUTAR EL SERVIDOR Y EL CLIENTE

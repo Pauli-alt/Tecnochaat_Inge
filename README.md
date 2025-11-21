@@ -49,6 +49,7 @@ Finalmente, el navegador actualiza la interfaz del chat en tiempo real.
 - Node.js (v18 o superior)
 - npm
 - Navegador web moderno
+- https://www.zeroc.com/ice/downloads/3.7/java 
 
 
 ## Instrucciones para Ejecutar el Sistema
