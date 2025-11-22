@@ -19,11 +19,11 @@ El sistema está formado por tres partes principales que trabajan juntas:
 
 - Backend Java (Servidor Principal)
 Es el encargado de manejar toda la lógica del chat.
-Se comunica directamente con los clientes mediante sockets y se ocupa de distribuir los mensajes, mantener el historial y gestionar los grupos.
+Se comunica con clientes TCP y expone servicios RPC mediante ZeroC Ice. Se ocupa de distribuir los mensajes, mantener el historial y gestionar los grupos.
 
 - Servidor Proxy HTTP (Node.js + Express)
 Este componente funciona como un puente entre el cliente web y el servidor Java.
-Recibe las peticiones del navegador y las traduce a mensajes que el servidor de Java puede entender.
+Recibe las peticiones del navegador y las traduce a llamadas RPC (Ice) hacia el backend Java.
 También devuelve las respuestas del servidor al navegador.
 
 - Cliente Web (Interfaz de Usuario)
@@ -34,9 +34,9 @@ Desde aquí los usuarios pueden conectarse, escribir mensajes, ver el chat en ti
 
 El cliente web envía un mensaje o una acción al proxy usando HTTP.
 
-El proxy (Node.js) traduce esa información y la envía por sockets al backend en Java.
+El proxy (Node.js) traduce esa información y la envía por RPC (ZeroC Ice) al backend en Java (servicios `ChatService` y `CallService`).
 
-El servidor Java procesa el mensaje y lo distribuye a los usuarios correspondientes (grupal, privado o por grupo).
+El servidor Java procesa el mensaje y lo distribuye a los usuarios correspondientes (grupal, privado o por grupo), además de exponer historiales, creación de grupos y llamadas.
 
 La respuesta regresa al proxy, que la entrega de nuevo al cliente web.
 
@@ -47,6 +47,7 @@ Finalmente, el navegador actualiza la interfaz del chat en tiempo real.
 - Java JDK 23 o superior
 - Gradle instalado (o usa el wrapper `./gradlew` tras generar el wrapper con `gradle wrapper`)
 - ZeroC Ice 3.7 para Java, incluyendo la herramienta `slice2java` disponible en el PATH
+- ZeroC Ice para Node.js (paquete npm `ice`) y, si necesitas generar stubs adicionales, `slice2js` en el PATH
 - Node.js (v18 o superior)
 - npm
 - Navegador web moderno
@@ -55,38 +56,28 @@ Finalmente, el navegador actualiza la interfaz del chat en tiempo real.
 
 ## Instrucciones para Ejecutar el Sistema
 
-Para que todo funcione correctamente, necesitamos ejecutar los tres componentes al mismo tiempo, cada uno en una terminal diferente.
+### Arranque rápido con script
+Desde la raíz del repo:
+1. Da permisos si es necesario: `chmod +x start-local.sh`
+2. Ejecuta: `./start-local.sh`
+   - Levanta backend Java (`runServer`) en puerto TCP 6789 e Ice en 10000.
+   - Levanta proxy-node en puerto 3001 usando Ice (host/puerto configurables con `ICE_HOST` y `ICE_PORT`).
+   - Levanta web-app (webpack dev server, usualmente en http://localhost:8080).
+3. Detén todo con `kill <PIDs>` que el script imprime o `pkill -f "com.tecnochat.server.Server" node webpack`.
 
-primero ejecutamos  "gradle buil" para ver que todo este funcionando bien
-
-- Terminal 1 — Backend Java
-
-Primero ejecutamos el servidor principal, que maneja las conexiones y los mensajes del chat usando el comando: 
- "java -cp build/classes/java/main Server.Server"
-
-- Terminal 2 — Proxy HTTP
-
-Luego iniciamos el proxy, que conecta el backend con el cliente web con el comando:
-
-"node .\proxy\index.js"
-
-
-Antes de eso, si es la primera vez, instalamos las dependencias con:
-
-"npm install" 
-
--  Terminal 3 — Cliente Web
-
-Finalmente, ejecutamos la interfaz web del chat, que se abrirá en el navegador.
-
-- npm run frontend
-
-Cuando se cargue, aparecerá algo como esto en la consola:
-
-[i] [webpack-dev-server] On Your Network (IPv4): http://192.168.1.8:8080/
-
-
-Abrimos ese enlace en el navegador, ingresamos nuestro nombre de usuario y ya podemos empezar a chatear con las demás personas conectadas.
+### Arranque manual
+- Backend Java:
+  - `cd backend-java`
+  - `./gradlew build`
+  - `./gradlew --no-daemon runServer` (expone TCP 6789 e Ice 10000)
+- Proxy HTTP (Node):
+  - `cd proxy-node`
+  - `npm install`
+  - `ICE_HOST=localhost ICE_PORT=10000 PORT=3001 npm run start`
+- Cliente Web:
+  - `cd web-app`
+  - `npm install`
+  - `npm run dev` (abre http://localhost:8080)
 
 ## Funcionalidades Principales
 
@@ -109,3 +100,6 @@ El sistema muestra en todo momento las personas que están conectadas al chat, p
 
 - Desconexión segura:
 Cada usuario puede salir del chat de forma segura sin afectar la comunicación de los demás.
+
+- Llamadas (RPC):
+Iniciar y terminar llamadas usando `CallService` vía proxy HTTP/Ice.
