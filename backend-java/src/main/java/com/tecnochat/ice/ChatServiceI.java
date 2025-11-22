@@ -1,24 +1,51 @@
 package com.tecnochat.ice;
 
-// public class ChatServiceI implements ChatService {
-//     @Override
-//     public void sendMessage(String from, String to, String message, Current current) {
-//         // Aquí llamas tu lógica real del servidor Java
-//         System.out.println("Mensaje recibido de " + from);
-//     }
+import TecnoChat.ChatService;
+import com.tecnochat.server.ClientHandler;
+import com.tecnochat.server.MessageHistory;
+import com.zeroc.Ice.Current;
 
-//     @Override
-//     public String[] getOnlineUsers(Current current) {
-//         return new String[] { "Alice", "Bob" }; // luego le conectamos tu estado real
-//     }
+public class ChatServiceI implements ChatService {
+    @Override
+    public void sendMessage(String from, String to, String message, Current current) {
+        boolean delivered = ClientHandler.sendPrivateMessageFrom(from, to, message);
 
-//     @Override
-//     public String[] getGroupMembers(String groupName, Current current) {
-//         return new String[] { "Alice", "Bob" };
-//     }
+        if (!delivered) {
+            System.out.println("[ICE] Destinatario no disponible para mensaje privado: " + to);
+        }
+    }
 
-//     @Override
-//     public void sendGroupMessage(String from, String group, String message, Current current) {
-//         System.out.println("Mensaje grupal: " + message);
-//     }
-// }
+    @Override
+    public String[] getOnlineUsers(Current current) {
+        return ClientHandler.getOnlineUsernames().toArray(new String[0]);
+    }
+
+    @Override
+    public String[] getGroupMembers(String groupName, Current current) {
+        return ClientHandler.getGroupMemberNames(groupName).toArray(new String[0]);
+    }
+
+    @Override
+    public void sendGroupMessage(String from, String group, String message, Current current) {
+        boolean delivered = ClientHandler.sendGroupMessageFrom(from, group, message);
+
+        if (!delivered) {
+            System.out.println("[ICE] No se envio mensaje grupal. Grupo no encontrado o sin miembros: " + group);
+        }
+    }
+
+    @Override
+    public boolean createGroup(String name, String[] members, Current current) {
+        return ClientHandler.createGroupFromRpc(name, members, "RPC");
+    }
+
+    @Override
+    public String[] getPrivateHistory(String requester, String other, Current current) {
+        return ClientHandler.getPrivateHistoryLines(requester, other).toArray(new String[0]);
+    }
+
+    @Override
+    public String[] getGroupHistory(String groupName, Current current) {
+        return MessageHistory.getGroupHistory(groupName).toArray(new String[0]);
+    }
+}

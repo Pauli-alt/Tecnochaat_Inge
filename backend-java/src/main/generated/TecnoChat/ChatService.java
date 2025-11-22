@@ -25,6 +25,12 @@ public interface ChatService extends com.zeroc.Ice.Object
 
     void sendGroupMessage(String from, String group, String message, com.zeroc.Ice.Current current);
 
+    boolean createGroup(String name, String[] members, com.zeroc.Ice.Current current);
+
+    String[] getPrivateHistory(String requester, String other, com.zeroc.Ice.Current current);
+
+    String[] getGroupHistory(String groupName, com.zeroc.Ice.Current current);
+
     /** @hidden */
     static final String[] _iceIds =
     {
@@ -132,11 +138,81 @@ public interface ChatService extends com.zeroc.Ice.Object
         return inS.setResult(inS.writeEmptyParams());
     }
 
+    /**
+     * @hidden
+     * @param obj -
+     * @param inS -
+     * @param current -
+     * @return -
+    **/
+    static java.util.concurrent.CompletionStage<com.zeroc.Ice.OutputStream> _iceD_createGroup(ChatService obj, final com.zeroc.IceInternal.Incoming inS, com.zeroc.Ice.Current current)
+    {
+        com.zeroc.Ice.Object._iceCheckMode(null, current.mode);
+        com.zeroc.Ice.InputStream istr = inS.startReadParams();
+        String iceP_name;
+        String[] iceP_members;
+        iceP_name = istr.readString();
+        iceP_members = istr.readStringSeq();
+        inS.endReadParams();
+        boolean ret = obj.createGroup(iceP_name, iceP_members, current);
+        com.zeroc.Ice.OutputStream ostr = inS.startWriteParams();
+        ostr.writeBool(ret);
+        inS.endWriteParams(ostr);
+        return inS.setResult(ostr);
+    }
+
+    /**
+     * @hidden
+     * @param obj -
+     * @param inS -
+     * @param current -
+     * @return -
+    **/
+    static java.util.concurrent.CompletionStage<com.zeroc.Ice.OutputStream> _iceD_getPrivateHistory(ChatService obj, final com.zeroc.IceInternal.Incoming inS, com.zeroc.Ice.Current current)
+    {
+        com.zeroc.Ice.Object._iceCheckMode(null, current.mode);
+        com.zeroc.Ice.InputStream istr = inS.startReadParams();
+        String iceP_requester;
+        String iceP_other;
+        iceP_requester = istr.readString();
+        iceP_other = istr.readString();
+        inS.endReadParams();
+        String[] ret = obj.getPrivateHistory(iceP_requester, iceP_other, current);
+        com.zeroc.Ice.OutputStream ostr = inS.startWriteParams();
+        ostr.writeStringSeq(ret);
+        inS.endWriteParams(ostr);
+        return inS.setResult(ostr);
+    }
+
+    /**
+     * @hidden
+     * @param obj -
+     * @param inS -
+     * @param current -
+     * @return -
+    **/
+    static java.util.concurrent.CompletionStage<com.zeroc.Ice.OutputStream> _iceD_getGroupHistory(ChatService obj, final com.zeroc.IceInternal.Incoming inS, com.zeroc.Ice.Current current)
+    {
+        com.zeroc.Ice.Object._iceCheckMode(null, current.mode);
+        com.zeroc.Ice.InputStream istr = inS.startReadParams();
+        String iceP_groupName;
+        iceP_groupName = istr.readString();
+        inS.endReadParams();
+        String[] ret = obj.getGroupHistory(iceP_groupName, current);
+        com.zeroc.Ice.OutputStream ostr = inS.startWriteParams();
+        ostr.writeStringSeq(ret);
+        inS.endWriteParams(ostr);
+        return inS.setResult(ostr);
+    }
+
     /** @hidden */
     final static String[] _iceOps =
     {
+        "createGroup",
+        "getGroupHistory",
         "getGroupMembers",
         "getOnlineUsers",
+        "getPrivateHistory",
         "ice_id",
         "ice_ids",
         "ice_isA",
@@ -160,33 +236,45 @@ public interface ChatService extends com.zeroc.Ice.Object
         {
             case 0:
             {
-                return _iceD_getGroupMembers(this, in, current);
+                return _iceD_createGroup(this, in, current);
             }
             case 1:
             {
-                return _iceD_getOnlineUsers(this, in, current);
+                return _iceD_getGroupHistory(this, in, current);
             }
             case 2:
             {
-                return com.zeroc.Ice.Object._iceD_ice_id(this, in, current);
+                return _iceD_getGroupMembers(this, in, current);
             }
             case 3:
             {
-                return com.zeroc.Ice.Object._iceD_ice_ids(this, in, current);
+                return _iceD_getOnlineUsers(this, in, current);
             }
             case 4:
             {
-                return com.zeroc.Ice.Object._iceD_ice_isA(this, in, current);
+                return _iceD_getPrivateHistory(this, in, current);
             }
             case 5:
             {
-                return com.zeroc.Ice.Object._iceD_ice_ping(this, in, current);
+                return com.zeroc.Ice.Object._iceD_ice_id(this, in, current);
             }
             case 6:
             {
-                return _iceD_sendGroupMessage(this, in, current);
+                return com.zeroc.Ice.Object._iceD_ice_ids(this, in, current);
             }
             case 7:
+            {
+                return com.zeroc.Ice.Object._iceD_ice_isA(this, in, current);
+            }
+            case 8:
+            {
+                return com.zeroc.Ice.Object._iceD_ice_ping(this, in, current);
+            }
+            case 9:
+            {
+                return _iceD_sendGroupMessage(this, in, current);
+            }
+            case 10:
             {
                 return _iceD_sendMessage(this, in, current);
             }

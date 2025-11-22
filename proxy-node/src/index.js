@@ -1,22 +1,22 @@
 import express from 'express';
 import cors from 'cors';
-import PersistentTCPClient from "./PersistentTCPClient.js"
+import IceClient from './IceClient.js';
 
 const app = express();
 const PORT = 3001;
-const JAVA_SERVER_HOST = 'localhost';
-const JAVA_SERVER_PORT = 6789;
+const ICE_HOST = process.env.ICE_HOST || 'localhost';
+const ICE_PORT = parseInt(process.env.ICE_PORT || '10000', 10);
 
 app.use(cors());
 app.use(express.json());
 
-// cliente persistente
-const persistentClient = new PersistentTCPClient(JAVA_SERVER_HOST, JAVA_SERVER_PORT);
-
-// Conectar al iniciar
-persistentClient.connect().then(() => {
-    console.log('Cliente persistente conectado y listo');
-}).catch(console.error);
+// Cliente Ice persistente
+const iceClient = new IceClient({ host: ICE_HOST, port: ICE_PORT });
+iceClient.connect().then(() => {
+    console.log('Cliente Ice conectado y listo');
+}).catch(err => {
+    console.error('Error conectando cliente Ice:', err);
+});
 
 
 // ENDPOINTS TECNOCHAT
@@ -26,7 +26,7 @@ persistentClient.connect().then(() => {
 app.get('/api/users/online', async (req, res) => {
     try {
         console.log(' Obteniendo usuarios en línea...');
-        const users = await persistentClient.getOnlineUsers();
+        const users = await iceClient.getOnlineUsers();
 
         console.log(' Usuarios encontrados:', users.length);
 
@@ -66,7 +66,7 @@ app.post('/api/messages/private', async (req, res) => {
         console.log('   Mensaje:', message);
         console.log('   Timestamp:', new Date().toLocaleString());
 
-        const result = await persistentClient.sendPrivateMessage(to, message);
+        await iceClient.sendMessage('WebCliente', to, message);
 
         console.log(' Mensaje privado enviado exitosamente');
 
@@ -105,7 +105,7 @@ app.post('/api/messages/group', async (req, res) => {
         console.log('   Mensaje:', message);
         console.log('   Timestamp:', new Date().toLocaleString());
 
-        const result = await persistentClient.sendGroupMessage(group, message);
+        await iceClient.sendGroupMessage('WebCliente', group, message);
 
         console.log(' Mensaje grupal enviado exitosamente');
 
@@ -125,7 +125,65 @@ app.post('/api/messages/group', async (req, res) => {
     }
 });
 
-// 4. CREAR GRUPO
+// 4. INICIAR LLAMADA (RPC)
+app.post('/api/calls/start', async (req, res) => {
+    try {
+        const { to, from } = req.body;
+        const caller = from || 'WebCliente';
+
+        if (!to) {
+            return res.status(400).json({
+                success: false,
+                error: 'Faltan parámetros requeridos: to'
+            });
+        }
+
+        console.log(' INICIANDO LLAMADA (Ice):', caller, '->', to);
+        await iceClient.startCall(caller, to);
+
+        res.json({
+            success: true,
+            message: 'Llamada iniciada via RPC',
+            to,
+            from: caller,
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error(' Error iniciando llamada:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            details: 'No se pudo iniciar la llamada via Ice'
+        });
+    }
+});
+
+// 5. TERMINAR LLAMADA (RPC)
+app.post('/api/calls/end', async (req, res) => {
+    try {
+        const { user } = req.body;
+        const target = user || 'WebCliente';
+
+        console.log(' TERMINANDO LLAMADA (Ice) para:', target);
+        await iceClient.endCall(target);
+
+        res.json({
+            success: true,
+            message: 'Llamada terminada via RPC',
+            user: target,
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error(' Error terminando llamada:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            details: 'No se pudo terminar la llamada via Ice'
+        });
+    }
+});
+
+// 6. CREAR GRUPO (no soportado aún en Ice)
 app.post('/api/groups', async (req, res) => {
     try {
         
@@ -151,17 +209,22 @@ app.post('/api/groups', async (req, res) => {
         console.log('   Miembros:', members);
         console.log('   Timestamp:', new Date().toLocaleString());
 
-        const result = await persistentClient.createGroup(name, members);
-
-        console.log(' Grupo creado exitosamente');
-
-        res.json({
-            success: true,
-            message: 'Grupo creado correctamente',
-            groupName: name,
-            members: Array.isArray(members) ? members : members.split(',').map(m => m.trim()),
-            timestamp: new Date().toISOString()
-        });
+        const result = await iceClient.createGroup(name, members);
+        if (result) {
+            console.log(' Grupo creado via Ice');
+            res.json({
+                success: true,
+                message: 'Grupo creado correctamente via RPC',
+                groupName: name,
+                members: Array.isArray(members) ? members : members.split(',').map(m => m.trim()),
+                timestamp: new Date().toISOString()
+            });
+        } else {
+            res.status(500).json({
+                success: false,
+                error: 'No se pudo crear el grupo via RPC'
+            });
+        }
     } catch (error) {
         console.error(' Error creando grupo:', error);
         res.status(500).json({
@@ -172,7 +235,40 @@ app.post('/api/groups', async (req, res) => {
     }
 });
 
-// 5. enpoint para obtenr historial de los chats privados 
+// 7. OBTENER MIEMBROS DE GRUPO (RPC)
+app.get('/api/groups/:group/members', async (req, res) => {
+    try {
+        const group = req.params.group;
+
+        if (!group) {
+            return res.status(400).json({
+                success: false,
+                error: 'El parámetro group es requerido'
+            });
+        }
+
+        console.log(' OBTENIENDO MIEMBROS DE GRUPO (Ice):', group);
+        const members = await iceClient.getGroupMembers(group);
+
+        res.json({
+            success: true,
+            group,
+            members,
+            count: members.length,
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error(' Error obteniendo miembros de grupo:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            members: [],
+            details: 'No se pudieron obtener los miembros del grupo'
+        });
+    }
+});
+
+// 8. enpoint para obtenr historial de los chats privados 
 app.get('/api/history/private', async (req, res) => {
     try {
         const { user } = req.query;
@@ -190,9 +286,7 @@ app.get('/api/history/private', async (req, res) => {
         console.log('   Usuario consulta:', user);
         console.log('   Timestamp:', new Date().toLocaleString());
 
-        const history = await persistentClient.getPrivateHistory(user);
-
-        console.log(' Historial obtenido:', history.length, 'mensajes');
+        const history = await iceClient.getPrivateHistory('WebCliente', user);
 
         res.json({
             success: true,
@@ -212,7 +306,7 @@ app.get('/api/history/private', async (req, res) => {
     }
 });
 
-// 6. Historial del grupo
+// 9. Historial del grupo
 app.get('/api/history/group', async (req, res) => {
     try {
         const { group } = req.query;
@@ -229,9 +323,7 @@ app.get('/api/history/group', async (req, res) => {
         console.log('   Grupo:', group);
         console.log('   Timestamp:', new Date().toLocaleString());
 
-        const history = await persistentClient.getGroupHistory(group);
-
-        console.log(' Historial de grupo obtenido:', history.length, 'mensajes');
+        const history = await iceClient.getGroupHistory(group);
 
         res.json({
             success: true,
@@ -256,7 +348,11 @@ app.get('/api/health', (req, res) => {
     res.json({
         success: true,
         status: 'running',
-        connected: persistentClient.isConnected,
+        ice: {
+            connected: iceClient.connected,
+            host: ICE_HOST,
+            port: ICE_PORT
+        },
         timestamp: new Date().toISOString()
     });
 });
@@ -273,5 +369,5 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, () => {
     console.log(`Proxy HTTP mejorado corriendo en http://localhost:${PORT}`);
-    console.log(`Conectando persistentemente al servidor Java en ${JAVA_SERVER_HOST}:${JAVA_SERVER_PORT}`);
+    console.log(`Conectando via Ice al servidor Java en ${ICE_HOST}:${ICE_PORT}`);
 });

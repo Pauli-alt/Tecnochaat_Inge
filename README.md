@@ -45,7 +45,8 @@ Finalmente, el navegador actualiza la interfaz del chat en tiempo real.
 ## Requisitos Previos
 
 - Java JDK 23 o superior
-- Gradle
+- Gradle instalado (o usa el wrapper `./gradlew` tras generar el wrapper con `gradle wrapper`)
+- ZeroC Ice 3.7 para Java, incluyendo la herramienta `slice2java` disponible en el PATH
 - Node.js (v18 o superior)
 - npm
 - Navegador web moderno

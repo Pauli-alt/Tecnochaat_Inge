@@ -878,4 +878,157 @@ public class ClientHandler implements Runnable {
             System.err.println("Error al cerrar conexion: " + e.getMessage());
         }
     }
+
+    // ====== Helpers para integración con ZeroC Ice ======
+    public static List<String> getOnlineUsernames() {
+        synchronized (users) {
+            return new ArrayList<>(users.keySet());
+        }
+    }
+
+    public static List<String> getGroupMemberNames(String groupName) {
+        if (groupName == null) {
+            return Collections.emptyList();
+        }
+
+        synchronized (groups) {
+            Set<ClientHandler> miembros = groups.get(groupName);
+            if (miembros == null || miembros.isEmpty()) {
+                return Collections.emptyList();
+            }
+
+            List<String> nombres = new ArrayList<>();
+            for (ClientHandler miembro : miembros) {
+                nombres.add(miembro.clientName);
+            }
+            return nombres;
+        }
+    }
+
+    public static boolean sendPrivateMessageFrom(String from, String to, String message) {
+        if (to == null || message == null) {
+            return false;
+        }
+
+        ClientHandler receptor;
+        synchronized (users) {
+            receptor = users.get(to);
+        }
+
+        if (receptor == null) {
+            return false;
+        }
+
+        receptor.out.println("Mensaje privado de " + from + ": " + message);
+        receptor.out.flush();
+        MessageHistory.savePrivateMessage(from, to, message);
+        System.out.println("[ICE] Mensaje privado enviado via RPC de " + from + " a " + to);
+        return true;
+    }
+
+    public static boolean sendGroupMessageFrom(String from, String groupName, String message) {
+        if (groupName == null || message == null) {
+            return false;
+        }
+
+        Set<ClientHandler> miembros;
+        synchronized (groups) {
+            miembros = groups.get(groupName);
+        }
+
+        if (miembros == null || miembros.isEmpty()) {
+            return false;
+        }
+
+        for (ClientHandler miembro : miembros) {
+            miembro.out.println("[" + groupName + "] " + from + ": " + message);
+            miembro.out.flush();
+        }
+
+        MessageHistory.saveGroupMessage(from, groupName, message);
+        System.out.println("[ICE] Mensaje grupal enviado via RPC por " + from + " al grupo " + groupName);
+        return true;
+    }
+
+    public static boolean notifyIncomingCall(String from, String to) {
+        if (to == null) {
+            return false;
+        }
+
+        ClientHandler receptor;
+        synchronized (users) {
+            receptor = users.get(to);
+        }
+
+        if (receptor == null) {
+            return false;
+        }
+
+        receptor.out.println("LLAMADA_RPC_INCOMING:" + from);
+        receptor.out.flush();
+        System.out.println("[ICE] Notificando llamada RPC de " + from + " a " + to);
+        return true;
+    }
+
+    public static void notifyCallEnded(String user) {
+        if (user == null) {
+            return;
+        }
+
+        ClientHandler handler;
+        synchronized (users) {
+            handler = users.get(user);
+        }
+
+        if (handler != null) {
+            handler.out.println("LLAMADA_RPC_TERMINADA");
+            handler.out.flush();
+        }
+
+        System.out.println("[ICE] Llamada finalizada para " + user);
+    }
+
+    public static boolean createGroupFromRpc(String groupName, String[] members, String creator) {
+        if (groupName == null || groupName.trim().isEmpty()) {
+            return false;
+        }
+
+        String cleanName = groupName.trim();
+        synchronized (groups) {
+            groups.putIfAbsent(cleanName, Collections.synchronizedSet(new HashSet<>()));
+            Set<ClientHandler> grupo = groups.get(cleanName);
+            if (creator != null) {
+                ClientHandler creador = users.get(creator);
+                if (creador != null) {
+                    grupo.add(creador);
+                }
+            }
+
+            if (members != null) {
+                for (String m : members) {
+                    if (m == null || m.trim().isEmpty()) {
+                        continue;
+                    }
+                    String nombre = m.trim();
+                    ClientHandler handler = users.get(nombre);
+                    if (handler != null) {
+                        grupo.add(handler);
+                        handler.out.println("Has sido agregado al grupo '" + cleanName + "' via RPC.");
+                    }
+                }
+            }
+        }
+
+        System.out.println("[ICE] Grupo creado/actualizado via RPC: " + cleanName);
+        return true;
+    }
+
+    public static List<String> getPrivateHistoryLines(String requester, String other) {
+        String user1 = requester == null ? "" : requester.trim();
+        String user2 = other == null ? "" : other.trim();
+        if (user1.isEmpty() || user2.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return MessageHistory.getPrivateHistory(user1, user2);
+    }
 }

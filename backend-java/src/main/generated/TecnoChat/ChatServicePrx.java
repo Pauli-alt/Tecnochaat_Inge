@@ -174,6 +174,130 @@ public interface ChatServicePrx extends com.zeroc.Ice.ObjectPrx
         return f;
     }
 
+    default boolean createGroup(String name, String[] members)
+    {
+        return createGroup(name, members, com.zeroc.Ice.ObjectPrx.noExplicitContext);
+    }
+
+    default boolean createGroup(String name, String[] members, java.util.Map<String, String> context)
+    {
+        return _iceI_createGroupAsync(name, members, context, true).waitForResponse();
+    }
+
+    default java.util.concurrent.CompletableFuture<java.lang.Boolean> createGroupAsync(String name, String[] members)
+    {
+        return _iceI_createGroupAsync(name, members, com.zeroc.Ice.ObjectPrx.noExplicitContext, false);
+    }
+
+    default java.util.concurrent.CompletableFuture<java.lang.Boolean> createGroupAsync(String name, String[] members, java.util.Map<String, String> context)
+    {
+        return _iceI_createGroupAsync(name, members, context, false);
+    }
+
+    /**
+     * @hidden
+     * @param iceP_name -
+     * @param iceP_members -
+     * @param context -
+     * @param sync -
+     * @return -
+     **/
+    default com.zeroc.IceInternal.OutgoingAsync<java.lang.Boolean> _iceI_createGroupAsync(String iceP_name, String[] iceP_members, java.util.Map<String, String> context, boolean sync)
+    {
+        com.zeroc.IceInternal.OutgoingAsync<java.lang.Boolean> f = new com.zeroc.IceInternal.OutgoingAsync<>(this, "createGroup", null, sync, null);
+        f.invoke(true, context, null, ostr -> {
+                     ostr.writeString(iceP_name);
+                     ostr.writeStringSeq(iceP_members);
+                 }, istr -> {
+                     boolean ret;
+                     ret = istr.readBool();
+                     return ret;
+                 });
+        return f;
+    }
+
+    default String[] getPrivateHistory(String requester, String other)
+    {
+        return getPrivateHistory(requester, other, com.zeroc.Ice.ObjectPrx.noExplicitContext);
+    }
+
+    default String[] getPrivateHistory(String requester, String other, java.util.Map<String, String> context)
+    {
+        return _iceI_getPrivateHistoryAsync(requester, other, context, true).waitForResponse();
+    }
+
+    default java.util.concurrent.CompletableFuture<String[]> getPrivateHistoryAsync(String requester, String other)
+    {
+        return _iceI_getPrivateHistoryAsync(requester, other, com.zeroc.Ice.ObjectPrx.noExplicitContext, false);
+    }
+
+    default java.util.concurrent.CompletableFuture<String[]> getPrivateHistoryAsync(String requester, String other, java.util.Map<String, String> context)
+    {
+        return _iceI_getPrivateHistoryAsync(requester, other, context, false);
+    }
+
+    /**
+     * @hidden
+     * @param iceP_requester -
+     * @param iceP_other -
+     * @param context -
+     * @param sync -
+     * @return -
+     **/
+    default com.zeroc.IceInternal.OutgoingAsync<String[]> _iceI_getPrivateHistoryAsync(String iceP_requester, String iceP_other, java.util.Map<String, String> context, boolean sync)
+    {
+        com.zeroc.IceInternal.OutgoingAsync<String[]> f = new com.zeroc.IceInternal.OutgoingAsync<>(this, "getPrivateHistory", null, sync, null);
+        f.invoke(true, context, null, ostr -> {
+                     ostr.writeString(iceP_requester);
+                     ostr.writeString(iceP_other);
+                 }, istr -> {
+                     String[] ret;
+                     ret = istr.readStringSeq();
+                     return ret;
+                 });
+        return f;
+    }
+
+    default String[] getGroupHistory(String groupName)
+    {
+        return getGroupHistory(groupName, com.zeroc.Ice.ObjectPrx.noExplicitContext);
+    }
+
+    default String[] getGroupHistory(String groupName, java.util.Map<String, String> context)
+    {
+        return _iceI_getGroupHistoryAsync(groupName, context, true).waitForResponse();
+    }
+
+    default java.util.concurrent.CompletableFuture<String[]> getGroupHistoryAsync(String groupName)
+    {
+        return _iceI_getGroupHistoryAsync(groupName, com.zeroc.Ice.ObjectPrx.noExplicitContext, false);
+    }
+
+    default java.util.concurrent.CompletableFuture<String[]> getGroupHistoryAsync(String groupName, java.util.Map<String, String> context)
+    {
+        return _iceI_getGroupHistoryAsync(groupName, context, false);
+    }
+
+    /**
+     * @hidden
+     * @param iceP_groupName -
+     * @param context -
+     * @param sync -
+     * @return -
+     **/
+    default com.zeroc.IceInternal.OutgoingAsync<String[]> _iceI_getGroupHistoryAsync(String iceP_groupName, java.util.Map<String, String> context, boolean sync)
+    {
+        com.zeroc.IceInternal.OutgoingAsync<String[]> f = new com.zeroc.IceInternal.OutgoingAsync<>(this, "getGroupHistory", null, sync, null);
+        f.invoke(true, context, null, ostr -> {
+                     ostr.writeString(iceP_groupName);
+                 }, istr -> {
+                     String[] ret;
+                     ret = istr.readStringSeq();
+                     return ret;
+                 });
+        return f;
+    }
+
     /**
      * Contacts the remote server to verify that the object implements this type.
      * Raises a local exception if a communication error occurs.
