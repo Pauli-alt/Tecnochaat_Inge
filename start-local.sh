@@ -14,14 +14,15 @@ echo ""
 echo "➡️  Levantando backend-java..."
 cd "$BASE_DIR/backend-java" || exit 1
 
-# Construir si no existe build
-if [ ! -d "build" ]; then
-    echo "   Compilando backend-java por primera vez..."
-    ./gradlew build
-fi
+# Construir siempre con cache/configuración reutilizable
+GRADLE_USER_HOME="$BASE_DIR/backend-java/.gradle"
+export GRADLE_USER_HOME
 
-# Ejecutar el servidor Ice en background
-./gradlew run > "$BASE_DIR/backend-java.log" 2>&1 &
+echo "   Compilando backend-java (gradlew build)..."
+./gradlew build >/dev/null 2>&1
+
+# Ejecutar el servidor (tarea runServer) en background
+./gradlew --no-daemon runServer > "$BASE_DIR/backend-java.log" 2>&1 &
 JAVA_PID=$!
 
 echo "   backend-java corriendo en PID: $JAVA_PID"
@@ -37,10 +38,14 @@ cd "$BASE_DIR/proxy-node" || exit 1
 
 if [ ! -d "node_modules" ]; then
     echo "   Instalando dependencias de proxy-node..."
-    npm install
+    npm install >/dev/null 2>&1
 fi
 
-npm run dev > "$BASE_DIR/proxy-node.log" 2>&1 &
+ICE_HOST=${ICE_HOST:-localhost}
+ICE_PORT=${ICE_PORT:-10000}
+PORT=${PORT:-3001}
+
+ICE_HOST="$ICE_HOST" ICE_PORT="$ICE_PORT" PORT="$PORT" npm run start > "$BASE_DIR/proxy-node.log" 2>&1 &
 PROXY_PID=$!
 
 echo "   proxy-node corriendo en PID: $PROXY_PID"
@@ -56,7 +61,7 @@ cd "$BASE_DIR/web-app" || exit 1
 
 if [ ! -d "node_modules" ]; then
     echo "   Instalando dependencias de web-app..."
-    npm install
+    npm install >/dev/null 2>&1
 fi
 
 npm run dev > "$BASE_DIR/web-app.log" 2>&1 &
