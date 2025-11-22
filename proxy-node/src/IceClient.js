@@ -61,43 +61,43 @@ class IceClient {
 
     async sendMessage(from, to, message) {
         await this._ensureConnected();
-        return this._invokeVoid(this.chatPrx, "sendMessage", (os) => {
-            os.writeString(from ?? "");
-            os.writeString(to ?? "");
-            os.writeString(message ?? "");
+        return this._invokeVoid(this.chatPrx, "sendMessage", (ostr) => {
+            ostr.writeString(from ?? "");
+            ostr.writeString(to ?? "");
+            ostr.writeString(message ?? "");
         });
     }
 
     async sendGroupMessage(from, group, message) {
         await this._ensureConnected();
-        return this._invokeVoid(this.chatPrx, "sendGroupMessage", (os) => {
-            os.writeString(from ?? "");
-            os.writeString(group ?? "");
-            os.writeString(message ?? "");
+        return this._invokeVoid(this.chatPrx, "sendGroupMessage", (ostr) => {
+            ostr.writeString(from ?? "");
+            ostr.writeString(group ?? "");
+            ostr.writeString(message ?? "");
         });
     }
 
     async startCall(from, to) {
         await this._ensureConnected();
-        return this._invokeVoid(this.callPrx, "startCall", (os) => {
-            os.writeString(from ?? "");
-            os.writeString(to ?? "");
+        return this._invokeVoid(this.callPrx, "startCall", (ostr) => {
+            ostr.writeString(from ?? "");
+            ostr.writeString(to ?? "");
         });
     }
 
     async endCall(user) {
         await this._ensureConnected();
-        return this._invokeVoid(this.callPrx, "endCall", (os) => {
-            os.writeString(user ?? "");
+        return this._invokeVoid(this.callPrx, "endCall", (ostr) => {
+            ostr.writeString(user ?? "");
         });
     }
 
     async createGroup(name, members) {
         await this._ensureConnected();
         const membersArr = Array.isArray(members) ? members : (members || "").split(",").map(m => m.trim()).filter(Boolean);
-        return this._invokeBool(this.chatPrx, "createGroup", (os) => {
-            os.writeString(name ?? "");
-            os.writeStringSeq(membersArr);
+        return this._invokeBool(this.chatPrx, "createGroup", (ostr) => {
+            ostr.writeString(name ?? "");
+            ostr.writeStringSeq(membersArr);
         });
     }
 
@@ -113,74 +113,79 @@ class IceClient {
         }
     }
 
-    async _invokeVoid(prx, operation, writeParams) {
-        const os = new Ice.OutputStream(this.communicator);
-        os.startEncapsulation();
-        if (writeParams) {
-            writeParams(os);
-        }
-        os.endEncapsulation();
-
-        const { returnValue } = await prx.ice_invoke(
-                operation,
-                Ice.OperationMode.Normal,
-                os.finished()
+    async _invokeVoid(prx, operation, marshalFn) {
+        const r = prx.constructor._invoke(
+            prx,
+            operation,
+            Ice.OperationMode.Normal,
+            Ice.FormatType.DefaultFormat,
+            null,
+            marshalFn
+                ? (ostr) => {
+                      ostr.startEncapsulation();
+                      marshalFn(ostr);
+                      ostr.endEncapsulation();
+                  }
+                : null,
+            null,
+            [],
+            null
         );
-
-        if (!returnValue) {
-            throw new Error(`[IceClient] Operacion ${operation} fallo`);
-        }
+        await r;
         return true;
     }
 
-    async _invokeStringSeq(prx, operation, writeParams) {
-        const os = new Ice.OutputStream(this.communicator);
-        os.startEncapsulation();
-        if (writeParams) {
-            writeParams(os);
-        }
-        os.endEncapsulation();
-
-        const { returnValue, outParams } = await prx.ice_invoke(
-                operation,
-                Ice.OperationMode.Normal,
-                os.finished()
+    async _invokeStringSeq(prx, operation, marshalFn) {
+        const r = prx.constructor._invoke(
+            prx,
+            operation,
+            Ice.OperationMode.Normal,
+            Ice.FormatType.DefaultFormat,
+            null,
+            marshalFn
+                ? (ostr) => {
+                      ostr.startEncapsulation();
+                      marshalFn(ostr);
+                      ostr.endEncapsulation();
+                  }
+                : null,
+            (res) => {
+                const istr = res.startReadParams();
+                const seq = istr.readStringSeq();
+                res.endReadParams();
+                return seq || [];
+            },
+            [],
+            null
         );
-
-        if (!returnValue) {
-            throw new Error(`[IceClient] Operacion ${operation} fallo`);
-        }
-
-        const is = new Ice.InputStream(this.communicator, outParams);
-        is.startEncapsulation();
-        const result = is.readStringSeq();
-        is.endEncapsulation();
+        const result = await r;
         return result || [];
     }
 
-    async _invokeBool(prx, operation, writeParams) {
-        const os = new Ice.OutputStream(this.communicator);
-        os.startEncapsulation();
-        if (writeParams) {
-            writeParams(os);
-        }
-        os.endEncapsulation();
-
-        const { returnValue, outParams } = await prx.ice_invoke(
-                operation,
-                Ice.OperationMode.Normal,
-                os.finished()
+    async _invokeBool(prx, operation, marshalFn) {
+        const r = prx.constructor._invoke(
+            prx,
+            operation,
+            Ice.OperationMode.Normal,
+            Ice.FormatType.DefaultFormat,
+            null,
+            marshalFn
+                ? (ostr) => {
+                      ostr.startEncapsulation();
+                      marshalFn(ostr);
+                      ostr.endEncapsulation();
+                  }
+                : null,
+            (res) => {
+                const istr = res.startReadParams();
+                const val = istr.readBool();
+                res.endReadParams();
+                return val;
+            },
+            [],
+            null
         );
-
-        if (!returnValue) {
-            return false;
-        }
-
-        const is = new Ice.InputStream(this.communicator, outParams);
-        is.startEncapsulation();
-        const result = is.readBool();
-        is.endEncapsulation();
-        return result;
+        return await r;
     }
 }
 
