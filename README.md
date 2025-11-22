@@ -59,9 +59,9 @@ Finalmente, el navegador actualiza la interfaz del chat en tiempo real.
 ### Arranque rápido con script
 Desde la raíz del repo:
 1. Da permisos si es necesario: `chmod +x start-local.sh`
-2. Ejecuta: `./start-local.sh`
+2. Ejecuta: `./start-local.sh` (en Windows, usar Git Bash o WSL; en PowerShell/CMD puedes correr `bash start-local.sh` si tienes bash disponible)
    - Levanta backend Java (`runServer`) en puerto TCP 6789 e Ice en 10000.
-   - Levanta proxy-node en puerto 3001 usando Ice (host/puerto configurables con `ICE_HOST` y `ICE_PORT`).
+   - Levanta proxy-node en puerto 3002 usando Ice (host/puerto configurables con `ICE_HOST` y `ICE_PORT`).
    - Levanta web-app (webpack dev server, usualmente en http://localhost:8080).
 3. Detén todo con `kill <PIDs>` que el script imprime o `pkill -f "com.tecnochat.server.Server" node webpack`.
 
