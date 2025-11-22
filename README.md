@@ -73,7 +73,7 @@ Desde la raíz del repo:
 - Proxy HTTP (Node):
   - `cd proxy-node`
   - `npm install`
-  - `ICE_HOST=localhost ICE_PORT=10000 PORT=3001 npm run start`
+  - `ICE_HOST=localhost ICE_PORT=10000 PORT=3002 npm run start`
 - Cliente Web:
   - `cd web-app`
   - `npm install`

@@ -43,7 +43,7 @@ fi
 
 ICE_HOST=${ICE_HOST:-localhost}
 ICE_PORT=${ICE_PORT:-10000}
-PORT=${PORT:-3001}
+PORT=${PORT:-3002}
 
 ICE_HOST="$ICE_HOST" ICE_PORT="$ICE_PORT" PORT="$PORT" npm run start > "$BASE_DIR/proxy-node.log" 2>&1 &
 PROXY_PID=$!

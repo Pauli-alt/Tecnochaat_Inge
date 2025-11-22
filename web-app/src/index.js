@@ -1,4 +1,4 @@
-const PROXY_URL = 'http://localhost:3001';
+const PROXY_URL = 'http://localhost:3002';
 
 // Navegación entre secciones
 function showSection(sectionId, evt) {

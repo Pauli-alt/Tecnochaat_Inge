@@ -3,7 +3,7 @@ import cors from 'cors';
 import IceClient from './IceClient.js';
 
 const app = express();
-const PORT = 3001;
+const PORT = parseInt(process.env.PORT || '3002', 10);
 const ICE_HOST = process.env.ICE_HOST || 'localhost';
 const ICE_PORT = parseInt(process.env.ICE_PORT || '10000', 10);
 
