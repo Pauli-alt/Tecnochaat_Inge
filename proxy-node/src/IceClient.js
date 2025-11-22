@@ -1,4 +1,4 @@
-import Ice from "ice";
+import { Ice } from "ice";
 
 class IceClient {
     constructor({ host = "localhost", port = 10000 } = {}) {
